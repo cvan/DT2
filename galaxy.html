@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <base href="/examples/DT2/">
     <title>Unity WebGL Player - DeadTrigger 2 WebGL Demo</title>
     <style type="text/css">
     <!--
@@ -100,5 +101,126 @@
     </script>
     <script src="fileloader.js"></script>
     <script async type="text/javascript" src="output.js"></script>
+    <script src="../../js/host.bundle.js"></script>
+    <script>
+      var pad = MobileGamepad.create();
+
+      var allowedEvents = {
+        'KeyboardEvent': [
+          'input',
+          'keydown',
+          'keypress',
+          'keyup'
+        ],
+        'MouseEvent': [
+          'click',
+          'contextmenu',
+          'dblclick',
+          'mousedown',
+          'mouseenter',
+          'mouseleave',
+          'mousemove',
+          'mouseout',
+          'mouseover',
+          'mouseup'
+        ]
+      };
+
+      function triggerEvent(type, props) {
+        var eventProps = {bubbles: true};
+        Object.keys(props || {}).forEach(function (prop) {
+          eventProps[prop] = props[prop];
+        });
+
+        // TODO: Get DOM L3/L4 events working in Chrome (works in Firefox).
+        if (false && 'KeyboardEvent' in window &&
+            allowedEvents['KeyboardEvent'].indexOf(type) !== -1) {
+          var event = new window.KeyboardEvent(type, eventProps);
+          Object.defineProperty(event, 'charCode', {
+            get: function () {
+              return this.charCodeVal;
+            }
+          });
+        } else if (false && 'MouseEvent' in window &&
+                   allowedEvents['MouseEvent'].indexOf(type) !== -1) {
+          var event = new MouseEvent(type, eventProps);
+        } else {
+          var event = document.createEvent('HTMLEvents');
+          event.initEvent(type, true, true);
+          event.eventName = type;
+          Object.keys(eventProps).forEach(function (prop) {
+            event[prop] = props[prop];
+          });
+        }
+
+        (document.body || window).dispatchEvent(event);
+      }
+
+      var buttonEvents = {
+        'left': {key: 'ArrowLeft', keyCode: 37},
+        'right': {key: 'ArrowRight', keyCode: 39},
+        'down': {key: 'ArrowDown', keyCode: 40},
+        'up': {key: 'ArrowUp', keyCode: 38}
+      };
+
+      var eventData = {};
+
+      // Object.keys(buttonEvents).forEach(function (eventName) {
+      //   eventData = buttonEvents[eventName];
+      //   pad.on('buttonpress.' + eventName, function () {
+      //     triggerEvent('keydown', eventData);
+      //     triggerEvent('keypress', eventData);
+      //   });
+      //   pad.on('buttonup.' + eventName, function () {
+      //     triggerEvent('keyup', eventData);
+      //   });
+      // });
+
+      window.addEventListener('keydown', function (e) {
+        switch (e.keyCode) {
+          case 37:
+            // left
+            console.error('left');
+            break;
+          case 38:
+            // up
+            console.error('up');
+            break;
+          case 39:
+            // right
+            console.error('right');
+            break;
+          case 40:
+            // down
+            console.error('down');
+            break;
+        }
+      });
+
+      window.addEventListener('keydown', function (e) {
+        switch (e.keyCode) {
+          case 73:
+            // I: up
+            console.error('I: up');
+            triggerEvent('keydown', buttonEvents.up);
+            break;
+          case 74:
+            // J: left
+            console.error('J: left');
+            triggerEvent('keydown', buttonEvents.left);
+            break;
+          case 75:
+            // K: down
+            console.error('K: down');
+            triggerEvent('keydown', buttonEvents.down);
+            break;
+          case 76:
+            // L: right
+            console.error('L: right');
+            triggerEvent('keydown', buttonEvents.right);
+            break;
+        }
+      });
+    </script>
   </body>
 </html>
