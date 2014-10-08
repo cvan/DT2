@@ -71,7 +71,7 @@
           };
         })(),
         printErr: function(text) {
-          console.error (text);
+          console.log (text);
         },
         canvas: document.getElementById('canvas'),
         progress: null,
@@ -176,23 +176,32 @@
       //   });
       // });
 
+      var state = {};
+
+      // var loop;
+      // window.requestAnimationFrame(loop = function () {
+      //   console.log('loop:', lastOne ? window.performance.now() - lastOne: 0);
+      //   lastOne = window.performance.now();
+      //   window.requestAnimationFrame(loop);
+      // });
+
       window.addEventListener('keydown', function (e) {
         switch (e.keyCode) {
           case 37:
             // left
-            console.error('left');
+            console.log('left');
             break;
           case 38:
             // up
-            console.error('up');
+            console.log('up');
             break;
           case 39:
             // right
-            console.error('right');
+            console.log('right');
             break;
           case 40:
             // down
-            console.error('down');
+            console.log('down');
             break;
         }
       });
@@ -201,23 +210,52 @@
         switch (e.keyCode) {
           case 73:
             // I: up
-            console.error('I: up');
+            // console.log('I: up - keypress / keydown');
+            triggerEvent('keypress', buttonEvents.up);
             triggerEvent('keydown', buttonEvents.up);
             break;
           case 74:
             // J: left
-            console.error('J: left');
+            // console.log('J: left - keypress / keydown');
+            triggerEvent('keypress', buttonEvents.left);
             triggerEvent('keydown', buttonEvents.left);
             break;
           case 75:
             // K: down
-            console.error('K: down');
+            // console.log('K: down - keypress / keydown');
+            triggerEvent('keypress', buttonEvents.down);
             triggerEvent('keydown', buttonEvents.down);
             break;
           case 76:
             // L: right
-            console.error('L: right');
+            // console.log('L: right - keypress / keydown');
+            triggerEvent('keypress', buttonEvents.right);
             triggerEvent('keydown', buttonEvents.right);
+            break;
+        }
+      });
+
+      window.addEventListener('keyup', function (e) {
+        switch (e.keyCode) {
+          case 73:
+            // I: up
+            // console.log('I: up – keyup');
+            triggerEvent('keyup', buttonEvents.up);
+            break;
+          case 74:
+            // J: left
+            // console.log('J: left – keyup');
+            triggerEvent('keyup', buttonEvents.left);
+            break;
+          case 75:
+            // K: down
+            // console.log('K: down – keyup');
+            triggerEvent('keyup', buttonEvents.down);
+            break;
+          case 76:
+            // L: right
+            // console.log('L: right – keyup');
+            triggerEvent('keyup', buttonEvents.right);
             break;
         }
       });
