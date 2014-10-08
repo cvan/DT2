@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Unity WebGL Player - DeadTrigger 2 WebGL Demo</title>
+    <style type="text/css">
+    <!--
+    body {
+      font-family: Helvetica, Verdana, Arial, sans-serif;
+      background-color: white;
+      color: black;
+      text-align: center;
+    }
+    a:link, a:visited {
+      color: #000;
+    }
+    a:active, a:hover {
+      color: #666;
+    }
+    p.header {
+      font-size: small;
+    }
+    p.header span {
+      font-weight: bold;
+    }
+    p.footer {
+      font-size: x-small;
+    }
+    -->
+    </style>
+    <style>
+      .emscripten { padding-right: 0; margin-left: auto; margin-right: auto; display: block; }
+      textarea.emscripten { font-family: monospace; width: 80%; }
+      div.emscripten { text-align: center; }
+      canvas.emscripten { border: 0px none; }
+    </style>
+    <link rel="stylesheet" href="html_resources/style.css">
+    <script src="UnityProgress.js"></script>
+    <script src="UnityConfig.js"></script>
+  </head>
+  <body class="demo-deadtrigger2">
+    <p class="header"><span>Unity WebGL Player</span></p>
+    <div class="demo-wrap clear">
+      <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" height="720px" width="1280px"></canvas>
+      <div class="logo"></div>
+      <div class="fullscreen"><img src="html_resources/fullscreen.png" width="38" height="38" alt="Fullscreen" title="Fullscreen" onclick="launchFullscreen(canvas);" /></div>
+      <div class="title">MadFinger Games - DeadTrigger 2</div>
+    </div>
+    <p class="footer">&laquo; created with <a href="http://unity3d.com/unity/" title="Go to unity3d.com">Unity</a> &raquo;</p>
+    <script type='text/javascript'>
+      function launchFullscreen(element) {
+      if(element.requestFullscreen) {
+        element.requestFullscreen();
+      } else if(element.mozRequestFullScreen) {
+        element.mozRequestFullScreen();
+      } else if(element.webkitRequestFullscreen) {
+        element.webkitRequestFullscreen();
+      } else if(element.msRequestFullscreen) {
+        element.msRequestFullscreen();
+      }
+      }
+      // connect to canvas
+      var Module = {
+        preRun: [],
+        postRun: [],
+        print: (function() {
+          return function(text) {
+            console.log (text);
+          };
+        })(),
+        printErr: function(text) {
+          console.error (text);
+        },
+        canvas: document.getElementById('canvas'),
+        progress: null,
+        setStatus: function(text) {
+          if (this.progress == null)
+          {
+            if (typeof UnityProgress != 'function')
+              return;
+            this.progress = new UnityProgress (canvas, {});
+          }
+          if (!Module.setStatus.last) Module.setStatus.last = { time: Date.now(), text: '' };
+          if (text === Module.setStatus.text) return;
+          this.progress.SetMessage (text);
+          var m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/);
+          if (m)
+            this.progress.SetProgress (parseInt(m[2])/parseInt(m[4]));
+          if (text === "")
+            this.progress.Clear()
+        },
+        totalDependencies: 0,
+        monitorRunDependencies: function(left) {
+          this.totalDependencies = Math.max(this.totalDependencies, left);
+          Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies-left) + '/' + this.totalDependencies + ')' : 'All downloads complete.');
+        }
+      };
+      Module.setStatus('Downloading...');
+    </script>
+    <script src="fileloader.js"></script>
+    <script async type="text/javascript" src="output.js"></script>
+  </body>
+</html>
