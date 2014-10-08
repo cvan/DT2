@@ -101,6 +101,7 @@
     </script>
     <script src="fileloader.js"></script>
     <script async type="text/javascript" src="output.js"></script>
+
     <script src="../../js/host.bundle.js"></script>
     <script>
       var pad = MobileGamepad.create();
@@ -176,32 +177,44 @@
       //   });
       // });
 
-      var state = {};
-
-      // var loop;
-      // window.requestAnimationFrame(loop = function () {
-      //   console.log('loop:', lastOne ? window.performance.now() - lastOne: 0);
-      //   lastOne = window.performance.now();
-      //   window.requestAnimationFrame(loop);
-      // });
-
       window.addEventListener('keydown', function (e) {
         switch (e.keyCode) {
           case 37:
             // left
-            console.log('left');
+            console.log('left: keydown');
             break;
           case 38:
             // up
-            console.log('up');
+            console.log('up: keydown');
             break;
           case 39:
             // right
-            console.log('right');
+            console.log('right: keydown');
             break;
           case 40:
             // down
-            console.log('down');
+            console.log('down: keydown');
+            break;
+        }
+      });
+
+      window.addEventListener('keyup', function (e) {
+        switch (e.keyCode) {
+          case 37:
+            // left
+            console.log('left: keyup');
+            break;
+          case 38:
+            // up
+            console.log('up: keyup');
+            break;
+          case 39:
+            // right
+            console.log('right: keyup');
+            break;
+          case 40:
+            // down
+            console.log('down: keyup');
             break;
         }
       });
@@ -259,6 +272,99 @@
             break;
         }
       });
+
+      function loop(func) {
+        var loop;
+        window.requestAnimationFrame(loop = function () {
+          func();
+          window.requestAnimationFrame(loop);
+        });
+      }
+
+      function getGamepads() {
+        var apis = [
+          'getGamepads',
+          'webkitGetGamepads',
+          'webkitGamepads'
+        ];
+        for (var i = 0; i < apis.length; i++) {
+          if (apis[i] in navigator) {
+            return navigator[apis[i]]();
+          }
+        }
+        return [];
+      }
+
+      if ('ongamepadconnected' in window) {
+        window.addEventListener('gamepadconnected', startPolling);
+        window.addEventListener('gamepaddisconnected', stopPolling);
+      } else {
+        startPolling();
+      }
+
+      var state = {};
+
+      var gamepad;
+      var thres = .1;
+
+      function startPolling() {
+        loop(function () {
+          if (!gamepad) {
+            gamepad = getGamepads()[0];
+          }
+          if (!gamepad) {
+            return;
+          }
+
+          // gamepad.axes[1]:
+          //   -1: left
+          //   +1: right
+          //
+          // gamepad.axes[2]:
+          //   -1: up
+          //   +1: down
+
+          if (!state.left && gamepad.axes[1] < -thres) {
+            triggerEvent('keypress', buttonEvents.left);
+            triggerEvent('keydown', buttonEvents.left);
+            state.left = true;
+          } else if (state.left && gamepad.axes[1] >= -thres) {
+            triggerEvent('keyup', buttonEvents.left);
+            state.left = false;
+          }
+
+          if (!state.right && gamepad.axes[1] > thres) {
+            triggerEvent('keypress', buttonEvents.right);
+            triggerEvent('keydown', buttonEvents.right);
+            state.right = true;
+          } else if (state.right && gamepad.axes[1] <= thres) {
+            triggerEvent('keyup', buttonEvents.right);
+            state.right = false;
+          }
+
+          if (!state.up && gamepad.axes[2] < -thres) {
+            triggerEvent('keypress', buttonEvents.up);
+            triggerEvent('keydown', buttonEvents.up);
+            state.up = true;
+          } else if (state.up && gamepad.axes[2] >= -thres) {
+            triggerEvent('keyup', buttonEvents.up);
+            state.up = false;
+          }
+
+          if (!state.down && gamepad.axes[2] > thres) {
+            triggerEvent('keypress', buttonEvents.down);
+            triggerEvent('keydown', buttonEvents.down);
+            state.down = true;
+          } else if (state.down && gamepad.axes[2] <= thres) {
+            triggerEvent('keyup', buttonEvents.down);
+            state.down = false;
+          }
+
+          // Update state.
+          state.axes = gamepad.axes;
+          state.buttons = gamepad.buttons;
+        });
+      }
     </script>
   </body>
 </html>
