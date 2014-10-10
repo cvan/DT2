@@ -101,7 +101,6 @@
     </script>
     <script src="fileloader.js"></script>
     <script async type="text/javascript" src="output.js"></script>
-
     <script src="../../js/host.bundle.js"></script>
     <script>
       var pad = MobileGamepad.create();
@@ -127,55 +126,32 @@
         ]
       };
 
-      function triggerEvent(type, props) {
+      function triggerEvent(type, props, element) {
         var eventProps = {bubbles: true};
         Object.keys(props || {}).forEach(function (prop) {
           eventProps[prop] = props[prop];
         });
 
         // TODO: Get DOM L3/L4 events working in Chrome (works in Firefox).
-        if (false && 'KeyboardEvent' in window &&
-            allowedEvents['KeyboardEvent'].indexOf(type) !== -1) {
-          var event = new window.KeyboardEvent(type, eventProps);
-          Object.defineProperty(event, 'charCode', {
-            get: function () {
-              return this.charCodeVal;
-            }
-          });
-        } else if (false && 'MouseEvent' in window &&
-                   allowedEvents['MouseEvent'].indexOf(type) !== -1) {
-          var event = new MouseEvent(type, eventProps);
-        } else {
-          var event = document.createEvent('HTMLEvents');
-          event.initEvent(type, true, true);
-          event.eventName = type;
-          Object.keys(eventProps).forEach(function (prop) {
-            event[prop] = props[prop];
-          });
-        }
+        var event = document.createEvent('HTMLEvents');
+        event.initEvent(type, true, true);
+        event.eventName = type;
+        Object.keys(eventProps).forEach(function (prop) {
+          event[prop] = eventProps[prop];
+        });
 
-        (document.body || window).dispatchEvent(event);
+        (element || document.body || window).dispatchEvent(event);
       }
 
-      var buttonEvents = {
-        'left': {key: 'ArrowLeft', keyCode: 37},
-        'right': {key: 'ArrowRight', keyCode: 39},
-        'down': {key: 'ArrowDown', keyCode: 40},
-        'up': {key: 'ArrowUp', keyCode: 38}
+      var eventsToFire = {
+        buttons: {
+          left: {key: 'ArrowLeft', keyCode: 37},
+          right: {key: 'ArrowRight', keyCode: 39},
+          down: {key: 'ArrowDown', keyCode: 40},
+          up: {key: 'ArrowUp', keyCode: 38}
+        },
+
       };
-
-      var eventData = {};
-
-      // Object.keys(buttonEvents).forEach(function (eventName) {
-      //   eventData = buttonEvents[eventName];
-      //   pad.on('buttonpress.' + eventName, function () {
-      //     triggerEvent('keydown', eventData);
-      //     triggerEvent('keypress', eventData);
-      //   });
-      //   pad.on('buttonup.' + eventName, function () {
-      //     triggerEvent('keyup', eventData);
-      //   });
-      // });
 
       window.addEventListener('keydown', function (e) {
         switch (e.keyCode) {
@@ -307,8 +283,33 @@
       var gamepad;
       var thres = .1;
 
+      function handleButton(name, value) {
+        if (!state[name] && value) {
+          state[name] = true;
+          triggerEvent('keypress', buttonsToFire.buttons[name]);
+          triggerEvent('keydown', buttonsToFire.buttons[name]);
+        } else if (state[name] && !value) {
+          state[name] = false;
+          triggerEvent('keyup', buttonsToFire.buttons[name]);
+        }
+        return state[name];
+      }
+
+      function handleAxis(name, active, inactive) {
+        if (!state[name] && active) {
+          state[name] = true;
+          triggerEvent('keypress', buttonsToFire.axes[name]);
+          triggerEvent('keydown', buttonsToFire.axes[name]);
+        } else if (state[name] && inactive) {
+          state[name] = false;
+          triggerEvent('keyup', buttonsToFire.axes[name]);
+        }
+        return state[name];
+      }
+
       function startPolling() {
         loop(function () {
+          console.log('loop');
           if (!gamepad) {
             gamepad = getGamepads()[0];
           }
@@ -316,49 +317,32 @@
             return;
           }
 
-          // gamepad.axes[1]:
-          //   -1: left
-          //   +1: right
-          //
-          // gamepad.axes[2]:
-          //   -1: up
-          //   +1: down
+          // gamepad.buttons[0]: X
+          // gamepad.buttons[1]: A
+          // gamepad.buttons[2]: B
+          // gamepad.buttons[3]: Y
+          // gamepad.buttons[4]: LB
+          // gamepad.buttons[5]: RB
+          // gamepad.buttons[6]: L
+          // gamepad.buttons[7]: R
+          // gamepad.buttons[8]: Back
+          // gamepad.buttons[9]: Start
 
-          if (!state.left && gamepad.axes[1] < -thres) {
-            triggerEvent('keypress', buttonEvents.left);
-            triggerEvent('keydown', buttonEvents.left);
-            state.left = true;
-          } else if (state.left && gamepad.axes[1] >= -thres) {
-            triggerEvent('keyup', buttonEvents.left);
-            state.left = false;
-          }
+          // left joystick:
+          // gamepad.axes[1]: -1 left, +1 right
+          // gamepad.axes[2]: -1 up, +1 down
 
-          if (!state.right && gamepad.axes[1] > thres) {
-            triggerEvent('keypress', buttonEvents.right);
-            triggerEvent('keydown', buttonEvents.right);
-            state.right = true;
-          } else if (state.right && gamepad.axes[1] <= thres) {
-            triggerEvent('keyup', buttonEvents.right);
-            state.right = false;
-          }
+          // right joystick:
+          // gamepad.axes[3]: -1 left, +1 right
+          // gamepad.axes[4]: -1 up, +1 down
 
-          if (!state.up && gamepad.axes[2] < -thres) {
-            triggerEvent('keypress', buttonEvents.up);
-            triggerEvent('keydown', buttonEvents.up);
-            state.up = true;
-          } else if (state.up && gamepad.axes[2] >= -thres) {
-            triggerEvent('keyup', buttonEvents.up);
-            state.up = false;
-          }
+          handleButton('start', gamepad.buttons[9]);
 
-          if (!state.down && gamepad.axes[2] > thres) {
-            triggerEvent('keypress', buttonEvents.down);
-            triggerEvent('keydown', buttonEvents.down);
-            state.down = true;
-          } else if (state.down && gamepad.axes[2] <= thres) {
-            triggerEvent('keyup', buttonEvents.down);
-            state.down = false;
-          }
+          handleAxis('left', gamepad.axes[1] < -thres, gamepad.axes[1] >= -thres);
+          handleAxis('right', gamepad.axes[1] > thres, gamepad.axes[1] <= thres);
+
+          handleAxis('up', gamepad.axes[2] < -thres, gamepad.axes[2] >= -thres);
+          handleAxis('down', gamepad.axes[2] > thres, gamepad.axes[2] <= thres);
 
           // Update state.
           state.axes = gamepad.axes;
