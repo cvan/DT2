@@ -127,7 +127,10 @@
       };
 
       function triggerEvent(type, props, element) {
-        var eventProps = {bubbles: true};
+        var eventProps = {
+          bubbles: true,
+          toElement: document.body
+        };
         Object.keys(props || {}).forEach(function (prop) {
           eventProps[prop] = props[prop];
         });
@@ -142,16 +145,6 @@
 
         (element || document.body || window).dispatchEvent(event);
       }
-
-      var eventsToFire = {
-        buttons: {
-          left: {key: 'ArrowLeft', keyCode: 37},
-          right: {key: 'ArrowRight', keyCode: 39},
-          down: {key: 'ArrowDown', keyCode: 40},
-          up: {key: 'ArrowUp', keyCode: 38}
-        },
-
-      };
 
       window.addEventListener('keydown', function (e) {
         switch (e.keyCode) {
@@ -283,29 +276,182 @@
       var gamepad;
       var thres = .1;
 
-      function handleButton(name, value) {
+      var events = {
+        key: {
+          on: ['keydown', 'keypress'],
+          off: ['keyup']
+        },
+        click: {
+          on: ['mousedown'],
+          off: ['mouseup', 'click']
+        },
+        hover: {
+          on: ['mousedown'],
+          off: ['mouseup', 'click']
+        }
+      };
+
+      var gamepadControls = {
+        start: {
+          trigger: 'keypress',
+          data: {key: 'Enter', keyCode: 13},
+          when: function (gamepad) {
+            // Ensure game has started.
+            return gamepad.buttons[9];
+          }
+        },
+        pause: {
+          trigger: 'keypress',
+          data: {key: 'p', keyCode: 80},
+          when: function (gamepad) {
+            // Ensure game hasn't started yet.
+            return gamepad.buttons[9];
+          }
+        },
+        left: {
+          trigger: 'keypress',
+          data: {key: 'ArrowLeft', keyCode: 37},
+          when: function (gamepad) {
+            // Left on left joystick.
+            return [
+              gamepad.axes[0] < -thres,
+              gamepad.axes[0] >= -thres
+            ];
+          }
+        },
+        right: {
+          trigger: 'keypress',
+          data: {key: 'ArrowRight', keyCode: 39},
+          when: function (gamepad) {
+            // Right on left joystick.
+            return [
+              gamepad.axes[0] > thres,
+              gamepad.axes[0] <= thres
+            ];
+          }
+        }
+        down: {
+          trigger: 'keypress',
+          data: {key: 'ArrowDown', keyCode: 40},
+          when: function (gamepad) {
+            // Down on left joystick.
+            return [
+              gamepad.axes[1] > thres,
+              gamepad.axes[1] <= thres
+            ];
+          }
+        },
+        up: {
+          trigger: 'keypress',
+          data: {key: 'ArrowUp', keyCode: 38},
+          when: function (gamepad) {
+            // Up on left joystick.
+            return [
+              gamepad.axes[1] < -thres,
+              gamepad.axes[1] >= -thres
+            ];
+          }
+        },
+        move: {
+          trigger: 'keypress',
+          data: function (gamepad) {
+            var w = document.documentElement.clientWidth;
+            var h = document.documentElement.clientHeight;
+             return {
+              x: gamepad.axes[2] * w,
+              y: gamepad.axes[2] * h
+            };
+          },
+          when: function () {
+            return true;
+          }
+        },
+        attack: {
+          when: function (gamepad) {
+            // `A` button is pressed.
+            return gamepad.buttons[1];
+          },
+          whenNot: function (gamepad) {
+            // `A` button is released.
+            return !gamepad.buttons[1];
+          },
+          then: 'click'
+          data: {},
+        },
+        toggleCombat: {
+          trigger: 'keypress',
+          data: {key: 'Tab', keyCode: 9}
+        },
+        toggleWeapons: {
+          trigger: 'keypress',
+          data: {key: 'q', keyCode: 81}
+        },
+        special1: {
+          trigger: 'keypress',
+          data: {key: '1', keyCode: 49}
+        },
+        special2: {
+          trigger: 'keypress',
+          data: {key: '2', keyCode: 50}
+        },
+        special3: {
+          trigger: 'keypress',
+          data: {key: '3', keyCode: 51}
+        }
+      };
+
+
+      function handleButton(name, value, bindToEvent) {
         if (!state[name] && value) {
           state[name] = true;
-          triggerEvent('keypress', buttonsToFire.buttons[name]);
-          triggerEvent('keydown', buttonsToFire.buttons[name]);
+          if (bindToEvent === 'click') {
+            handleButton[]
+            triggerEvent('mousedown', buttonsToFire.buttons[name]);
+          } else {
+            triggerEvent('keydown', buttonsToFire.buttons[name]);
+            triggerEvent('keypress', buttonsToFire.buttons[name]);
+          }
         } else if (state[name] && !value) {
           state[name] = false;
-          triggerEvent('keyup', buttonsToFire.buttons[name]);
+          if (bindToEvent === 'click') {
+            triggerEvent('mouseup', buttonsToFire.buttons[name]);
+            triggerEvent('click', buttonsToFire.buttons[name]);
+          } else {
+            triggerEvent('keyup', buttonsToFire.buttons[name]);
+          }
         }
         return state[name];
       }
 
-      function handleAxis(name, active, inactive) {
+      function handleAxis(name, active, inactive, bindToEvent) {
         if (!state[name] && active) {
           state[name] = true;
-          triggerEvent('keypress', buttonsToFire.axes[name]);
-          triggerEvent('keydown', buttonsToFire.axes[name]);
+          if (bindToEvent === 'click') {
+            triggerEvent('mousedown', buttonsToFire.buttons[name]);
+          } else {
+            triggerEvent('keypress', buttonsToFire.buttons[name]);
+            triggerEvent('keydown', buttonsToFire.buttons[name]);
+          }
         } else if (state[name] && inactive) {
           state[name] = false;
-          triggerEvent('keyup', buttonsToFire.axes[name]);
+          if (bindToEvent === 'click') {
+            triggerEvent('mouseup', buttonsToFire.buttons[name]);
+            triggerEvent('click', buttonsToFire.buttons[name]);
+          } else {
+            triggerEvent('keyup', buttonsToFire.buttons[name]);
+          }
         }
         return state[name];
       }
+
+      // game keyboard controls:
+      //
+      // W/A/S/D (or arrow keys) to walk [DONE]
+      // click to attack
+      // mouse to look
+      // Q to switch weapons
+      // Tab to switch to meleé combat
+      // 1/2/3 for special powers
 
       function startPolling() {
         loop(function () {
@@ -317,6 +463,8 @@
             return;
           }
 
+          // gamepad mapping:
+          //
           // gamepad.buttons[0]: X
           // gamepad.buttons[1]: A
           // gamepad.buttons[2]: B
@@ -327,22 +475,31 @@
           // gamepad.buttons[7]: R
           // gamepad.buttons[8]: Back
           // gamepad.buttons[9]: Start
-
+          //
           // left joystick:
           // gamepad.axes[1]: -1 left, +1 right
           // gamepad.axes[2]: -1 up, +1 down
-
+          //
           // right joystick:
           // gamepad.axes[3]: -1 left, +1 right
           // gamepad.axes[4]: -1 up, +1 down
 
-          handleButton('start', gamepad.buttons[9]);
+          handleButton('start', gamepad.buttons[9], 'key');
+          handleButton('a', gamepad.buttons[1], 'click');
 
-          handleAxis('left', gamepad.axes[1] < -thres, gamepad.axes[1] >= -thres);
-          handleAxis('right', gamepad.axes[1] > thres, gamepad.axes[1] <= thres);
+          // left joystick (to walk)
+          handleAxis('left', gamepad.axes[0] < -thres, gamepad.axes[0] >= -thres, 'key');
+          handleAxis('right', gamepad.axes[0] > thres, gamepad.axes[0] <= thres, 'key');
 
-          handleAxis('up', gamepad.axes[2] < -thres, gamepad.axes[2] >= -thres);
-          handleAxis('down', gamepad.axes[2] > thres, gamepad.axes[2] <= thres);
+          handleAxis('up', gamepad.axes[1] < -thres, gamepad.axes[1] >= -thres, 'key');
+          handleAxis('down', gamepad.axes[1] > thres, gamepad.axes[1] <= thres, 'key');
+
+          // right joystick (to look)
+          handleAxis('left', gamepad.axes[2] < -thres, gamepad.axes[2] >= -thres, 'key');
+          handleAxis('right', gamepad.axes[2] > thres, gamepad.axes[2] <= thres, 'key');
+
+          handleAxis('up', gamepad.axes[3] < -thres, gamepad.axes[3] >= -thres, 'key');
+          handleAxis('down', gamepad.axes[3] > thres, gamepad.axes[3] <= thres, 'key');
 
           // Update state.
           state.axes = gamepad.axes;
